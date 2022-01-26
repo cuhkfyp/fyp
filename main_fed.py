@@ -52,10 +52,6 @@ if __name__ == '__main__':
     else:
         exit('Error: unrecognized dataset')
     img_size = dataset_train[0][0].shape
-#    print(dict_users[0])
-#    print("###################################################################################################################")
-#    print(dict_users[1])
-#    exit(0)
 
     # build model
     if args.model == 'cnn' and args.dataset == 'cifar':
@@ -84,10 +80,9 @@ if __name__ == '__main__':
     net_best = None
     best_loss = None
     val_acc_list, net_list = [], []
-    test_mode = "BC"  # for test only / mode of scheduling scheme
+    test_mode = "BN2"  # for test only / mode of scheduling scheme
     Kc = 10
     K = int(args.frac * args.num_users)  # for test only / number of selected user
-
     M = args.num_users
     n = 2 * 10 ** 6;  # for test only / total transmission time in that iter
 
@@ -144,7 +139,6 @@ if __name__ == '__main__':
 ####################################################################################################################
         # update global weights locals-glob=detla
         #w_glob = FedAvg(w_locals)
-
         w_glob = FedAvg(n_new_w_locals)
 
         # copy weight to net_glob
@@ -164,15 +158,19 @@ if __name__ == '__main__':
     # plot loss curve
     plt.figure()
     plt.ylim([0, 5])
-    plt.plot(range(len(loss_test_array)), loss_test_array,color=(255/255,255/255,0/255))
+    plt.plot(range(len(loss_test_array)), loss_test_array,color=(0/255,0/255,255/255))
+
     plt.ylabel('test_loss')
-    plt.savefig('./save/fed_{}_{}_{}_{}_C{}_iid{}_loss_fig.png'.format(args.dataset, test_mode, args.model, args.epochs, args.frac, args.iid))
+    plt.savefig('./save/__fed_{}_{}_{}_{}_C{}_iid{}_local_ep_{}_local_bs_{}_lr_{}_loss_fig_.png'.format(args.dataset, test_mode, args.model, args.epochs, args.frac, args.iid,args.local_ep,args.local_bs,args.lr))
 
     plt.figure()
     plt.ylim([0, 100])
-    plt.plot(range(len(acc_test_array)), acc_test_array, color=(255/255,255/255,0/255))
+    plt.plot(range(len(acc_test_array)), acc_test_array,color=(0/255,0/255,255/255))
+
     plt.ylabel('test_acc')
-    plt.savefig('./save/fed_{}_{}_{}_{}_C{}_iid{}_acc_fig.png'.format(args.dataset, test_mode, args.model, args.epochs, args.frac, args.iid))
+    plt.savefig('./save/__fed_{}_{}_{}_{}_C{}_iid{}_local_ep_{}_local_bs_{}_lr_{}_acc_fig_.png'.format(args.dataset, test_mode, args.model, args.epochs, args.frac, args.iid,args.local_ep,args.local_bs,args.lr))
+
+
 
     # testing
     net_glob.eval()
@@ -180,3 +178,6 @@ if __name__ == '__main__':
     acc_test, loss_test = test_img(net_glob, dataset_test, args)
     print("Training accuracy: {:.2f}".format(acc_train))
     print("Testing accuracy: {:.2f}".format(acc_test))
+    other_data="./store/_train_acc_test_acc_test_acc_array_test_loss_array_{}_{}_{}_ep{}_frac{}_iid{}_local_ep{}_local_bs{}_lr{}".format(args.dataset, test_mode, args.model, args.epochs, args.frac, args.iid,args.local_ep,args.local_bs,args.lr)
+
+    np.savez(other_data,Training_accuracy=acc_train,Testing_acc=acc_test,train_loss=loss_train,testing_acc_array=acc_test_array,testing_loss_array=loss_test_array)
