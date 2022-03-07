@@ -4,16 +4,21 @@ from numpy import linalg as LA
 from math import comb
 from collections import OrderedDict
 import torch
+import copy
 
-def maxFinder(w_locals, K):  #w_locals => M
+def maxFinder(w_locals, K,glob):  #w_locals => M
     w = []
+    l2_arr=[]
+
     for i in range(len(w_locals)):
         temp = []
         for item in w_locals[i].keys():
-            temp = (np.concatenate((temp, w_locals[i][item].cpu().numpy()), axis=None))
+            temp = (np.concatenate((temp, (w_locals[i][item].cpu().numpy())), axis=None))
         w.append(temp)
     l2_arr = LA.norm(np.array(w), axis=1)
+
     idxs = l2_arr.argsort()[::-1][:K]
+
     ret_w = np.array(np.array(w_locals)[idxs])
     ret_l2 = np.array(l2_arr[idxs])
     return (ret_w, ret_l2)  #ret_w => K, ret_l2 => K
@@ -41,10 +46,11 @@ def nFinder(l2_arr, C_arr, K, n):  #l2_arr => K, C_arr => K
         for i in range(K):
             if (i != q):
                 upper *= C_arr[i]
-        ret_arr.append( upper/lower * n * l2_arr[q])
+        ret_arr.append( math.ceil((upper/lower) * n * l2_arr[q]))
+
     return ret_arr  #ret_arr => K
 
-def qFinder(C_arr, N_arr, new_w_locals, K):
+def qFinder(C_arr, N_arr, new_w_locals, K,glob):
     ret_arr = []
     for index in range(K):
         #######get variable
@@ -80,24 +86,31 @@ def qFinder(C_arr, N_arr, new_w_locals, K):
             # print(midpoint)
 
         for item in new_w_locals[index].keys():
-            array_x = np.concatenate((array_x, np.array(new_w_locals[index][item].cpu().numpy())), axis=None)
-        # target = 1
-        abs_x = np.array(np.abs(array_x))
-        ind = np.argpartition(abs_x, -target)[:-target]
-        array_x[ind] = 0
-        max_ele = max(array_x)
-        min_ele = min(array_x)
-        a = (max_ele - min_ele) / (2 ** 32)
+            new_w_local_cpu = new_w_locals[index][item].cpu().numpy()
+            glob_cpu = glob[item].cpu().numpy()
+            k = new_w_local_cpu - glob_cpu
 
-        array_x_temp = ((np.round((array_x - min_ele) / a)) * a) + min_ele
+            array_x = np.concatenate((array_x, k), axis=None)
 
-        difference = np.sum(np.abs(array_x - array_x_temp))
+            abs_x = np.array(np.abs(array_x))
 
-        ret_arr.append(OrderedDict([
-            ('layer_input.weight', torch.FloatTensor((np.reshape(array_x_temp[:iw], iwLen)).tolist())),
-            ('layer_input.bias', torch.FloatTensor((np.reshape(array_x_temp[iw:iw + ib], ibLen)).tolist())),
-            ('layer_hidden.weight', torch.FloatTensor((np.reshape(array_x_temp[iw + ib:iw + ib + hw], hwLen)).tolist())),
-            ('layer_hidden.bias', torch.FloatTensor((np.reshape(array_x_temp[iw + ib + hw:], hbLen)).tolist()))
-        ]))
+            ind = np.argpartition(abs_x, -target)[-target:]
+            array_x = array_x[ind]
+            max_ele = max(array_x)
+            min_ele = min(array_x)
+            a = (max_ele - min_ele) / (2 ** 32)
+            array_x_temp = ((np.round((array_x - min_ele) / a)) * a) + min_ele
+
+
+            fin_result = copy.deepcopy(glob)
+
+            for i in range(target):
+                for key in new_w_locals[index].keys():
+                    flag = ((new_w_locals[index][key] - glob[key] == array_x_temp[i]).nonzero()).cpu().numpy()
+                    for j in flag:
+                        fin_result[key][tuple(j)] = fin_result[key][tuple(j)] + array_x_temp[i]
+            ret_arr.append(fin_result)
+
+
 
     return ret_arr

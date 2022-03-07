@@ -9,6 +9,7 @@ from math import comb
 import torch
 from collections import OrderedDict
 from numpy import linalg as LA
+import copy
 
 def maxFinder(w_locals, bc_arr, K): #w_locals => M, bc_arr => M
     w = np.array(w_locals)
@@ -50,13 +51,13 @@ def nFinder(C_arr, K, n):
             if (i != q):
                 upper *= C_arr[i]
 
-        ret_arr.append((upper / lower) * n)
+        ret_arr.append(math.ceil((upper / lower) * n))
 
     return ret_arr
 
 
-def qFinder(C_arr, N_arr, new_w_locals, K):
-    ret_arr = []
+def qFinder(C_arr, N_arr, new_w_locals, K,glob):
+    ret_arr=[]
     for index in range(K):
         #######get variable
 
@@ -88,29 +89,37 @@ def qFinder(C_arr, N_arr, new_w_locals, K):
                 start = midpoint
             # print(midpoint)
 
-        for item in new_w_locals[index].keys():
 
-            array_x = np.concatenate((array_x, np.array(new_w_locals[index][item].cpu().numpy())), axis=None)
+
+        for item in new_w_locals[index].keys():
+            new_w_local_cpu=new_w_locals[index][item].cpu().numpy()
+            glob_cpu = glob[item].cpu().numpy()
+            k = new_w_local_cpu - glob_cpu
+
+            array_x = np.concatenate((array_x, k), axis=None)
 
         abs_x = np.array(np.abs(array_x))
 
-
-        ind = np.argpartition(abs_x, -target)[:-target]
-        array_x[ind] = 0
+        ind = np.argpartition(abs_x, -target)[-target:]
+        array_x = array_x[ind]
         max_ele = max(array_x)
         min_ele = min(array_x)
         a = (max_ele - min_ele) / (2 ** 32)
 
         array_x_temp = ((np.round((array_x - min_ele) / a)) * a) + min_ele
 
-        difference = np.sum(np.abs(array_x - array_x_temp))
+        fin_result= copy.deepcopy(glob)
 
-        ret_arr.append(OrderedDict([
-            ('layer_input.weight', torch.FloatTensor((np.reshape(array_x_temp[:iw], iwLen)).tolist())),
-            ('layer_input.bias', torch.FloatTensor((np.reshape(array_x_temp[iw:iw + ib], ibLen)).tolist())),
-            ('layer_hidden.weight', torch.FloatTensor((np.reshape(array_x_temp[iw + ib:iw + ib + hw], hwLen)).tolist())),
-            ('layer_hidden.bias', torch.FloatTensor((np.reshape(array_x_temp[iw + ib + hw:], hbLen)).tolist()))
-        ]))
+
+        for i in range(target):
+            for key in new_w_locals[index].keys():
+                flag = ((new_w_locals[index][key] - glob[key] == array_x_temp[i]).nonzero()).cpu().numpy()
+                for j in flag:
+                    fin_result[key][tuple(j)] = fin_result[key][tuple(j)]+array_x_temp[i]
+        ret_arr.append(fin_result)
+
+
+
 
     return ret_arr
 

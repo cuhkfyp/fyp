@@ -52,6 +52,10 @@ if __name__ == '__main__':
     else:
         exit('Error: unrecognized dataset')
     img_size = dataset_train[0][0].shape
+#    print(dict_users[0])
+#    print("###################################################################################################################")
+#    print(dict_users[1])
+#    exit(0)
 
     # build model
     if args.model == 'cnn' and args.dataset == 'cifar':
@@ -80,15 +84,28 @@ if __name__ == '__main__':
     net_best = None
     best_loss = None
     val_acc_list, net_list = [], []
-    test_mode = "BC_BN2"  # for test only / mode of scheduling scheme
-    Kc = 10
+    test_mode = "BN2"  # for test only / mode of scheduling scheme
+    Kc = 20
     K = int(args.frac * args.num_users)  # for test only / number of selected user
+
     M = args.num_users
-    n = 2 * 10 ** 6;  # for test only / total transmission time in that iter
+    n = 5000  # for test only / total transmission time in that iter
+
+
+
+
+    """    d=0
+        for k in w_glob.keys():
+            d+=torch.numel(w_glob[k])
+        print(d)
+        exit(0)
+    """
 
     if args.all_clients:
         print("Aggregation over all clients")
         w_locals = [w_glob for i in range(args.num_users)]
+
+
     for iter in range(args.epochs):
         loss_locals = []
 
@@ -103,42 +120,48 @@ if __name__ == '__main__':
                 w_locals[idx] = copy.deepcopy(w)
             else:
                 w_locals.append(copy.deepcopy(w))
+
             loss_locals.append(copy.deepcopy(loss))
 
 ###################################################################################################################
+
+
         n_new_w_locals = []
         if(test_mode == "BC"):
             bc_arr = np.random.randn(len(w_locals),2)/np.sqrt(2)
             (new_w_locals, h) = BC.maxFinder(w_locals, bc_arr, K)
             C_arr = BC.cFinder(h, M, K)
             N_arr = BC.nFinder(C_arr, K, n)
-            n_new_w_locals = BC.qFinder(C_arr, N_arr, new_w_locals, K)  #then should be w_glob = FedAvg(n_new_w_locals)
+            n_new_w_locals = BC.qFinder(C_arr, N_arr, new_w_locals, K,w_glob)  #then should be w_glob = FedAvg(n_new_w_locals)
 
         if(test_mode == "BN2"): # BN2
-            (new_w_locals, l2_arr) = BN2.maxFinder(w_locals, K)
+            (new_w_locals, l2_arr) = BN2.maxFinder(w_locals, K,w_glob)
             bc_arr = np.random.rand(K, 2) / np.sqrt(2)
             C_arr = BN2.cFinder(bc_arr, K, M)
             N_arr = BN2.nFinder(l2_arr, C_arr, K, n)
-            n_new_w_locals = BN2.qFinder(C_arr, N_arr, new_w_locals, K)
+            n_new_w_locals = BN2.qFinder(C_arr, N_arr, new_w_locals, K,w_glob)
 
         if(test_mode == "BC_BN2"): # BC-BN2
             bc_arr = np.random.rand(M, 2) / np.sqrt(2)
-            (new_w_locals, l2_arr, h) = BC_BN2.maxFinder(w_locals, bc_arr, Kc, K)
+            (new_w_locals, l2_arr, h) = BC_BN2.maxFinder(w_locals, bc_arr, Kc, K,w_glob)
             C_arr = BC_BN2.cFinder(h, K, M)
             N_arr = BC_BN2.nFinder(l2_arr, C_arr, K, n)
-            n_new_w_locals = BC_BN2.qFinder(C_arr, N_arr, new_w_locals, K)
+            n_new_w_locals = BC_BN2.qFinder(C_arr, N_arr, new_w_locals, K,w_glob)
 
         if(test_mode == "BN2_C"): # BN2-C
             bc_arr = np.random.rand(M, 2) / np.sqrt(2)
             C_arr = BN2_C.cFinder(bc_arr, K, M)
-            w_1st = BN2_C.qFinder_1st(C_arr, w_locals, M, n)
+            w_1st = BN2_C.qFinder_1st(C_arr, w_locals, M, n,w_glob)
             (new_w_locals, l2_arr, new_C_arr) = BN2_C.maxFinder(w_1st, K, C_arr)
             N_arr = BN2_C.nFinder(l2_arr, new_C_arr, K, n)
-            n_new_w_locals = BN2_C.qFinder_2nd(new_C_arr, N_arr, new_w_locals, K)
+            n_new_w_locals = BN2_C.qFinder_2nd(new_C_arr, N_arr, new_w_locals, K,w_glob)
 
 ####################################################################################################################
         # update global weights locals-glob=detla
         #w_glob = FedAvg(w_locals)
+
+
+
         w_glob = FedAvg(n_new_w_locals)
 
         # copy weight to net_glob
@@ -152,23 +175,21 @@ if __name__ == '__main__':
         acc_test, loss_test = test_img(net_glob, dataset_test, args)
         loss_test_array.append(loss_test)
         acc_test_array.append(acc_test)
-        print('Round {:3d}, global loss {:.3f}, global acc {:.3f}'.format(iter, loss_test,acc_test))
+        print('Round {:3d}, global loss {:.3f}, global acc {:.3f}'.format(iter, loss_test, acc_test))
 
 
     # plot loss curve
     plt.figure()
     plt.ylim([0, 5])
-    plt.plot(range(len(loss_test_array)), loss_test_array,color=(0/255,128/255,0/255))
-
+    plt.plot(range(len(loss_test_array)), loss_test_array,color=(165/255,42/255,42/255))
     plt.ylabel('test_loss')
-    plt.savefig('./save/____fed__{}__{}__{}_{}_C{}_iid{}_local_ep_{}_local_bs_{}_lr_{}_loss_fig_.png'.format(args.dataset, test_mode, args.model, args.epochs, args.frac, args.iid,args.local_ep,args.local_bs,args.lr))
+    plt.savefig('./save/___fed__{}_{}___{}_{}__C{}_iid{}_local_ep_{}_local_batch_{}_lr_{}_loss_fig_.png'.format(args.dataset, test_mode, args.model, args.epochs, args.frac, args.iid,args.local_ep,args.local_bs,args.lr))
 
     plt.figure()
     plt.ylim([0, 100])
-    plt.plot(range(len(acc_test_array)), acc_test_array,color=(0/255,128/255,0/255))
-
+    plt.plot(range(len(acc_test_array)), acc_test_array, color=(165/255,42/255,42/255))
     plt.ylabel('test_acc')
-    plt.savefig('./save/____fed__{}__{}_{}__{}_C{}_iid{}_local_ep_{}_local_bs_{}_lr_{}_acc_fig_.png'.format(args.dataset, test_mode, args.model, args.epochs, args.frac, args.iid,args.local_ep,args.local_bs,args.lr))
+    plt.savefig('./save/___fed__{}_{}_{}___{}__C{}_iid{}_local_ep_{}_local_batch_{}_lr_{}_acc_fig_.png'.format(args.dataset, test_mode, args.model, args.epochs, args.frac, args.iid,args.local_ep,args.local_bs,args.lr))
 
     # testing
     net_glob.eval()
@@ -177,8 +198,6 @@ if __name__ == '__main__':
     print("Training accuracy: {:.2f}".format(acc_train))
     print("Testing accuracy: {:.2f}".format(acc_test))
 
-    other_data = "./store/_train_acc_test_acc_test_acc_array_test_loss_array_{}_{}_{}_ep{}_frac{}_iid{}_local_ep{}_local_bs{}_lr{}".format(
-        args.dataset, test_mode, args.model, args.epochs, args.frac, args.iid, args.local_ep, args.local_bs, args.lr)
+    other_data = "./store/_train_acc_test_acc_test_acc_array_test_loss_array_{}_{}_{}_ep{}_frac{}_iid{}_local_ep{}_local_bs{}_lr{}".format(args.dataset, test_mode, args.model, args.epochs, args.frac, args.iid, args.local_ep, args.local_bs, args.lr)
 
-    np.savez(other_data, Training_accuracy=acc_train, Testing_acc=acc_test, train_loss=loss_train,
-             testing_acc_array=acc_test_array, testing_loss_array=loss_test_array)
+    np.savez(other_data, Training_accuracy=acc_train, Testing_acc=acc_test, train_loss=loss_train,testing_acc_array=acc_test_array, testing_loss_array=loss_test_array)
