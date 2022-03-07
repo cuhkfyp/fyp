@@ -84,7 +84,7 @@ if __name__ == '__main__':
     net_best = None
     best_loss = None
     val_acc_list, net_list = [], []
-    test_mode = "BN2"  # for test only / mode of scheduling scheme
+    test_mode = "BC_BN2"  # for test only / mode of scheduling scheme
     Kc = 20
     K = int(args.frac * args.num_users)  # for test only / number of selected user
 
@@ -143,7 +143,7 @@ if __name__ == '__main__':
 
         if(test_mode == "BC_BN2"): # BC-BN2
             bc_arr = np.random.rand(M, 2) / np.sqrt(2)
-            (new_w_locals, l2_arr, h) = BC_BN2.maxFinder(w_locals, bc_arr, Kc, K,w_glob)
+            (new_w_locals, l2_arr, h) = BC_BN2.maxFinder(w_locals, bc_arr, Kc, K)
             C_arr = BC_BN2.cFinder(h, K, M)
             N_arr = BC_BN2.nFinder(l2_arr, C_arr, K, n)
             n_new_w_locals = BC_BN2.qFinder(C_arr, N_arr, new_w_locals, K,w_glob)
@@ -181,13 +181,13 @@ if __name__ == '__main__':
     # plot loss curve
     plt.figure()
     plt.ylim([0, 5])
-    plt.plot(range(len(loss_test_array)), loss_test_array,color=(165/255,42/255,42/255))
+    plt.plot(range(len(loss_test_array)), loss_test_array,color=(255/255,105/255,180/255))
     plt.ylabel('test_loss')
     plt.savefig('./save/___fed__{}_{}___{}_{}__C{}_iid{}_local_ep_{}_local_batch_{}_lr_{}_loss_fig_.png'.format(args.dataset, test_mode, args.model, args.epochs, args.frac, args.iid,args.local_ep,args.local_bs,args.lr))
 
     plt.figure()
     plt.ylim([0, 100])
-    plt.plot(range(len(acc_test_array)), acc_test_array, color=(165/255,42/255,42/255))
+    plt.plot(range(len(acc_test_array)), acc_test_array, color=(255/255,105/255,180/255))
     plt.ylabel('test_acc')
     plt.savefig('./save/___fed__{}_{}_{}___{}__C{}_iid{}_local_ep_{}_local_batch_{}_lr_{}_acc_fig_.png'.format(args.dataset, test_mode, args.model, args.epochs, args.frac, args.iid,args.local_ep,args.local_bs,args.lr))
 
