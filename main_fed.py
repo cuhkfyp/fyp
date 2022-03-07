@@ -135,7 +135,7 @@ if __name__ == '__main__':
             n_new_w_locals = BC.qFinder(C_arr, N_arr, new_w_locals, K,w_glob)  #then should be w_glob = FedAvg(n_new_w_locals)
 
         if(test_mode == "BN2"): # BN2
-            (new_w_locals, l2_arr) = BN2.maxFinder(w_locals, K,w_glob)
+            (new_w_locals, l2_arr) = BN2.maxFinder(w_locals, K)
             bc_arr = np.random.rand(K, 2) / np.sqrt(2)
             C_arr = BN2.cFinder(bc_arr, K, M)
             N_arr = BN2.nFinder(l2_arr, C_arr, K, n)
