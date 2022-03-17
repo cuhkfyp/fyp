@@ -84,16 +84,17 @@ if __name__ == '__main__':
     net_best = None
     best_loss = None
     val_acc_list, net_list = [], []
-    test_mode = "BC_BN2"  # for test only / mode of scheduling scheme
-    Kc = 20
+    test_mode = "BN2_C"  # for test only / mode of scheduling scheme
+    Kc = 10
     K = int(args.frac * args.num_users)  # for test only / number of selected user
 
     M = args.num_users
     n = 5000  # for test only / total transmission time in that iter
 
 
-
-
+    print(test_mode)
+    print("kc is",end=" ")
+    print(Kc)
     """    d=0
         for k in w_glob.keys():
             d+=torch.numel(w_glob[k])
@@ -135,7 +136,7 @@ if __name__ == '__main__':
             n_new_w_locals = BC.qFinder(C_arr, N_arr, new_w_locals, K,w_glob)  #then should be w_glob = FedAvg(n_new_w_locals)
 
         if(test_mode == "BN2"): # BN2
-            (new_w_locals, l2_arr) = BN2.maxFinder(w_locals, K)
+            (new_w_locals, l2_arr) = BN2.maxFinder(w_locals, K,w_glob)
             bc_arr = np.random.rand(K, 2) / np.sqrt(2)
             C_arr = BN2.cFinder(bc_arr, K, M)
             N_arr = BN2.nFinder(l2_arr, C_arr, K, n)
@@ -152,7 +153,7 @@ if __name__ == '__main__':
             bc_arr = np.random.rand(M, 2) / np.sqrt(2)
             C_arr = BN2_C.cFinder(bc_arr, K, M)
             w_1st = BN2_C.qFinder_1st(C_arr, w_locals, M, n,w_glob)
-            (new_w_locals, l2_arr, new_C_arr) = BN2_C.maxFinder(w_1st, K, C_arr)
+            (new_w_locals, l2_arr, new_C_arr) = BN2_C.maxFinder(w_1st, K, C_arr,w_locals)
             N_arr = BN2_C.nFinder(l2_arr, new_C_arr, K, n)
             n_new_w_locals = BN2_C.qFinder_2nd(new_C_arr, N_arr, new_w_locals, K,w_glob)
 
