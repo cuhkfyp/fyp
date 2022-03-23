@@ -31,8 +31,6 @@ def cFinder(h, M, K):  #h => K
 
     return ret_arr  #ret_arr => K
 
-
-
 def nFinder(C_arr, K, n):
     ret_arr = []
     lower = 0
@@ -58,10 +56,12 @@ def nFinder(C_arr, K, n):
 
 def qFinder(C_arr, N_arr, new_w_locals, K,glob):
     ret_arr=[]
+
     for index in range(K):
         #######get variable
 
         array_x = []
+        flat_glob = []
         iwLen = np.array(new_w_locals[index]['layer_input.weight'].cpu().numpy()).shape
         ibLen = np.array(new_w_locals[index]['layer_input.bias'].cpu().numpy()).shape
         hwLen = np.array(new_w_locals[index]['layer_hidden.weight'].cpu().numpy()).shape
@@ -95,29 +95,42 @@ def qFinder(C_arr, N_arr, new_w_locals, K,glob):
             new_w_local_cpu=new_w_locals[index][item].cpu().numpy()
             glob_cpu = glob[item].cpu().numpy()
             k = new_w_local_cpu - glob_cpu
-
+            flat_glob = np.concatenate((flat_glob,glob_cpu),axis=None)
             array_x = np.concatenate((array_x, k), axis=None)
 
         abs_x = np.array(np.abs(array_x))
 
-        ind = np.argpartition(abs_x, -target)[-target:]
-        array_x = array_x[ind]
+
+        ind_that_set_to_zero = np.argpartition(abs_x, -target)[:-target]
+
+        ind_that_quantize = np.argpartition(abs_x, -target)[-target:]
+
+        array_x[ind_that_set_to_zero] = 0
+
         max_ele = max(array_x)
         min_ele = min(array_x)
-        a = (max_ele - min_ele) / (2 ** 32)
+
+        a=(max_ele-min_ele)/2**32
 
         array_x_temp = ((np.round((array_x - min_ele) / a)) * a) + min_ele
 
-        fin_result= copy.deepcopy(glob)
 
 
-        for i in range(target):
-            for key in new_w_locals[index].keys():
-                flag = ((new_w_locals[index][key] - glob[key] == array_x_temp[i]).nonzero()).cpu().numpy()
-                for j in flag:
-                    fin_result[key][tuple(j)] = fin_result[key][tuple(j)]+array_x_temp[i]
-        ret_arr.append(fin_result)
 
+
+        #print(len(array_x_temp))
+        #print(len(flat_glob))
+
+        array_x_temp=np.add(array_x_temp,flat_glob)
+
+
+
+        ret_arr.append(OrderedDict([
+            ('layer_input.weight', torch.FloatTensor((np.reshape(array_x_temp[:iw], iwLen)).tolist())),
+            ('layer_input.bias', torch.FloatTensor((np.reshape(array_x_temp[iw:iw + ib], ibLen)).tolist())),
+            ('layer_hidden.weight', torch.FloatTensor((np.reshape(array_x_temp[iw + ib:iw + ib + hw], hwLen)).tolist())),
+            ('layer_hidden.bias', torch.FloatTensor((np.reshape(array_x_temp[iw + ib + hw:], hbLen)).tolist()))
+        ]))
 
 
 
