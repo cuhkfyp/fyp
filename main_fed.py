@@ -29,6 +29,7 @@ from models.test import test_img
 if __name__ == '__main__':
     # parse args
     args = args_parser()
+    #np.random.seed(args.seed)
     args.device = torch.device('cuda:{}'.format(args.gpu) if torch.cuda.is_available() and args.gpu != -1 else 'cpu')
     print(args.device)
     # load dataset and split users
@@ -84,15 +85,17 @@ if __name__ == '__main__':
     net_best = None
     best_loss = None
     val_acc_list, net_list = [], []
-    test_mode = "BN2_C"  # for test only / mode of scheduling scheme
+    test_mode = "BN2"  # for test only / mode of scheduling scheme
     Kc = 10
     K = int(args.frac * args.num_users)  # for test only / number of selected user
 
     M = args.num_users
     n = 5000  # for test only / total transmission time in that iter
 
-
+    print("this is the case that  total-local")
+    #print("this is the case that only total")
     print(test_mode)
+    print(args.num_users*args.frac)
     print("kc is",end=" ")
     print(Kc)
     """    d=0
@@ -137,7 +140,7 @@ if __name__ == '__main__':
 
         if(test_mode == "BN2"): # BN2
             (new_w_locals, l2_arr) = BN2.maxFinder(w_locals, K,w_glob)
-            bc_arr = np.random.rand(K, 2) / np.sqrt(2)
+            bc_arr = np.random.randn(K, 2) / np.sqrt(2)
             C_arr = BN2.cFinder(bc_arr, K, M)
             N_arr = BN2.nFinder(l2_arr, C_arr, K, n)
             n_new_w_locals = BN2.qFinder(C_arr, N_arr, new_w_locals, K,w_glob)
