@@ -46,7 +46,7 @@ def nFinder(l2_arr, C_arr, K, n):  #l2_arr => K, C_arr => K
         for i in range(K):
             if (i != q):
                 upper *= C_arr[i]
-        ret_arr.append( math.ceil((upper/lower) * n * l2_arr[q]))
+        ret_arr.append( (upper/lower) * n * l2_arr[q])
 
     return ret_arr  #ret_arr => K
 
@@ -110,13 +110,12 @@ def qFinder(C_arr, N_arr, new_w_locals, K,glob):
 
         array_x_temp = ((np.round((array_x - min_ele) / a)) * a) + min_ele
 
+        array_x_temp[ind_that_set_to_zero] = 0
 
-
-
-        #print(len(array_x_temp))
-        #print(len(flat_glob))
-
-        array_x_temp=np.add(array_x_temp,flat_glob)
+        if target == 0:
+            array_x_temp = flat_glob
+        elif target > 0:
+            array_x_temp = np.add(flat_glob, array_x_temp)
 
 
 
@@ -126,5 +125,7 @@ def qFinder(C_arr, N_arr, new_w_locals, K,glob):
             ('layer_hidden.weight', torch.FloatTensor((np.reshape(array_x_temp[iw + ib:iw + ib + hw], hwLen)).tolist())),
             ('layer_hidden.bias', torch.FloatTensor((np.reshape(array_x_temp[iw + ib + hw:], hbLen)).tolist()))
         ]))
+
+
 
     return ret_arr

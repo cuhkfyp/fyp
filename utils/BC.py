@@ -51,6 +51,7 @@ def nFinder(C_arr, K, n):
 
         ret_arr.append(math.ceil((upper / lower) * n))
 
+
     return ret_arr
 
 
@@ -114,14 +115,12 @@ def qFinder(C_arr, N_arr, new_w_locals, K,glob):
 
         array_x_temp = ((np.round((array_x - min_ele) / a)) * a) + min_ele
 
+        array_x_temp[ind_that_set_to_zero] = 0
 
-
-
-
-        #print(len(array_x_temp))
-        #print(len(flat_glob))
-
-        array_x_temp=np.add(array_x_temp,flat_glob)
+        if target == 0:
+            array_x_temp = flat_glob
+        elif target > 0:
+            array_x_temp = np.add(flat_glob, array_x_temp)
 
 
 
