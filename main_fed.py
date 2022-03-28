@@ -29,6 +29,8 @@ from models.test import test_img
 if __name__ == '__main__':
     # parse args
     args = args_parser()
+    np.random.seed(args.seed)
+    torch.manual_seed(args.seed)
     #np.random.seed(args.seed)
     args.device = torch.device('cuda:{}'.format(args.gpu) if torch.cuda.is_available() and args.gpu != -1 else 'cpu')
     print(args.device)
@@ -85,14 +87,15 @@ if __name__ == '__main__':
     net_best = None
     best_loss = None
     val_acc_list, net_list = [], []
-    test_mode = "BN2"  # for test only / mode of scheduling scheme
-    Kc = 10
+    test_mode = "BC"  # for test only / mode of scheduling scheme
+    Kc = 20
     K = int(args.frac * args.num_users)  # for test only / number of selected user
 
     M = args.num_users
     n = 5000  # for test only / total transmission time in that iter
 
-    print("this is the case that  total-local")
+    #print("this is the case that  total-local")
+    #print("and without the zero line")
     #print("this is the case that only total")
     print(test_mode)
     print(args.num_users*args.frac)
@@ -139,6 +142,8 @@ if __name__ == '__main__':
             n_new_w_locals = BC.qFinder(C_arr, N_arr, new_w_locals, K,w_glob)  #then should be w_glob = FedAvg(n_new_w_locals)
 
         if(test_mode == "BN2"): # BN2
+            if iter>=64:
+                hi=0
             (new_w_locals, l2_arr) = BN2.maxFinder(w_locals, K,w_glob)
             bc_arr = np.random.randn(K, 2) / np.sqrt(2)
             C_arr = BN2.cFinder(bc_arr, K, M)
@@ -146,14 +151,14 @@ if __name__ == '__main__':
             n_new_w_locals = BN2.qFinder(C_arr, N_arr, new_w_locals, K,w_glob)
 
         if(test_mode == "BC_BN2"): # BC-BN2
-            bc_arr = np.random.rand(M, 2) / np.sqrt(2)
-            (new_w_locals, l2_arr, h) = BC_BN2.maxFinder(w_locals, bc_arr, Kc, K)
+            bc_arr = np.random.randn(M, 2) / np.sqrt(2)
+            (new_w_locals, l2_arr, h) = BC_BN2.maxFinder(w_locals, bc_arr, Kc, K,w_glob)
             C_arr = BC_BN2.cFinder(h, K, M)
             N_arr = BC_BN2.nFinder(l2_arr, C_arr, K, n)
             n_new_w_locals = BC_BN2.qFinder(C_arr, N_arr, new_w_locals, K,w_glob)
 
         if(test_mode == "BN2_C"): # BN2-C
-            bc_arr = np.random.rand(M, 2) / np.sqrt(2)
+            bc_arr = np.random.randn(M, 2) / np.sqrt(2)
             C_arr = BN2_C.cFinder(bc_arr, K, M)
             w_1st = BN2_C.qFinder_1st(C_arr, w_locals, M, n,w_glob)
             (new_w_locals, l2_arr, new_C_arr) = BN2_C.maxFinder(w_1st, K, C_arr,w_locals)
@@ -202,6 +207,6 @@ if __name__ == '__main__':
     print("Training accuracy: {:.2f}".format(acc_train))
     print("Testing accuracy: {:.2f}".format(acc_test))
 
-    other_data = "./store/_train_acc_test_acc_test_acc_array_test_loss_array_{}_{}_{}_ep{}_frac{}_iid{}_local_ep{}_local_bs{}_lr{}".format(args.dataset, test_mode, args.model, args.epochs, args.frac, args.iid, args.local_ep, args.local_bs, args.lr)
+    other_data = "./store/___train_acc_test_acc_test_acc_array_test_loss_array_{}_{}_{}_ep{}_frac{}_iid{}_local_ep{}_local_bs{}_lr{}_kc_{}".format(args.dataset, test_mode, args.model, args.epochs, args.frac, args.iid, args.local_ep, args.local_bs, args.lr,Kc)
 
     np.savez(other_data, Training_accuracy=acc_train, Testing_acc=acc_test, train_loss=loss_train,testing_acc_array=acc_test_array, testing_loss_array=loss_test_array)
