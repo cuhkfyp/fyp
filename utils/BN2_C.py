@@ -50,7 +50,7 @@ def nFinder(l2_arr, C_arr, K, n):  #l2_arr => K, C_arr => K
         ret_arr.append( math.ceil((upper/lower) * n * l2_arr[q]))
     return ret_arr  #ret_arr => K
 
-def qFinder_2nd(C_arr, N_arr, new_w_locals, K):
+def qFinder_2nd(C_arr, N_arr, new_w_locals, K,glob):
     ret_arr=[]
 
     for index in range(K):
