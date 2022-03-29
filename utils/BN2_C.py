@@ -14,7 +14,7 @@ def cFinder(bc_arr, K, M):  #bc_arr => M
         ret_arr.append(c)
     return ret_arr  #ret_arr => M
 
-def maxFinder(w_1st, K, C_arr,w_locals_real,w_glob):  #w_locals => M, C_arr => M
+def maxFinder(w_1st, K, C_arr,w_locals_real):  #w_locals => M, C_arr => M
     w = []
     """
     for i in range(len(w_1st)):
