@@ -87,12 +87,12 @@ if __name__ == '__main__':
     net_best = None
     best_loss = None
     val_acc_list, net_list = [], []
-    test_mode = "BC"  # for test only / mode of scheduling scheme
-    Kc = 20
+    test_mode = "BN2_C"  # for test only / mode of scheduling scheme
+    Kc = 10
     K = int(args.frac * args.num_users)  # for test only / number of selected user
 
     M = args.num_users
-    n = 5000  # for test only / total transmission time in that iter
+    n = 3000  # for test only / total transmission time in that iter
 
     #print("this is the case that  total-local")
     #print("and without the zero line")
@@ -101,12 +101,9 @@ if __name__ == '__main__':
     print(args.num_users*args.frac)
     print("kc is",end=" ")
     print(Kc)
-    """    d=0
-        for k in w_glob.keys():
-            d+=torch.numel(w_glob[k])
-        print(d)
-        exit(0)
-    """
+
+
+
 
     if args.all_clients:
         print("Aggregation over all clients")
@@ -157,13 +154,13 @@ if __name__ == '__main__':
             N_arr = BC_BN2.nFinder(l2_arr, C_arr, K, n)
             n_new_w_locals = BC_BN2.qFinder(C_arr, N_arr, new_w_locals, K,w_glob)
 
-        if(test_mode == "BN2_C"): # BN2-C
+        if (test_mode == "BN2_C"):  # BN2-C
             bc_arr = np.random.randn(M, 2) / np.sqrt(2)
             C_arr = BN2_C.cFinder(bc_arr, K, M)
-            w_1st = BN2_C.qFinder_1st(C_arr, w_locals, M, n,w_glob)
-            (new_w_locals, l2_arr, new_C_arr) = BN2_C.maxFinder(w_1st, K, C_arr,w_locals)
+            w_1st = BN2_C.qFinder_1st(C_arr, w_locals, M, n, w_glob)
+            (new_w_locals, l2_arr, new_C_arr) = BN2_C.maxFinder(w_1st, K, C_arr, w_locals)
             N_arr = BN2_C.nFinder(l2_arr, new_C_arr, K, n)
-            n_new_w_locals = BN2_C.qFinder_2nd(new_C_arr, N_arr, new_w_locals, K,w_glob)
+            n_new_w_locals = BN2_C.qFinder_2nd(new_C_arr, N_arr, new_w_locals, K, w_glob)
 
 ####################################################################################################################
         # update global weights locals-glob=detla
@@ -207,6 +204,6 @@ if __name__ == '__main__':
     print("Training accuracy: {:.2f}".format(acc_train))
     print("Testing accuracy: {:.2f}".format(acc_test))
 
-    other_data = "./store/___train_acc_test_acc_test_acc_array_test_loss_array_{}_{}_{}_ep{}_frac{}_iid{}_local_ep{}_local_bs{}_lr{}_kc_{}".format(args.dataset, test_mode, args.model, args.epochs, args.frac, args.iid, args.local_ep, args.local_bs, args.lr,Kc)
-
+    #other_data = "./store/nsmall5000/___train_acc_test_acc_test_acc_array_test_loss_array_{}_{}_{}_ep{}_frac{}_iid{}_local_ep{}_local_bs{}_lr{}_kc_{}".format(args.dataset, test_mode, args.model, args.epochs, args.frac, args.iid, args.local_ep, args.local_bs, args.lr,Kc)
+    other_data = "./store/nsmall5000/___train_acc_test_acc_test_acc_array_test_loss_array_{}_{}_{}_ep{}_frac{}_iid{}_local_ep{}_local_bs{}_lr{}_kc_{}".format(args.dataset, test_mode, args.model, args.epochs, args.frac, args.iid, args.local_ep, args.local_bs, args.lr,Kc)
     np.savez(other_data, Training_accuracy=acc_train, Testing_acc=acc_test, train_loss=loss_train,testing_acc_array=acc_test_array, testing_loss_array=loss_test_array)
