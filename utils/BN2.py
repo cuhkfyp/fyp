@@ -46,7 +46,7 @@ def nFinder(l2_arr, C_arr, K, n):  #l2_arr => K, C_arr => K
         for i in range(K):
             if (i != q):
                 upper *= C_arr[i]
-        ret_arr.append( (upper/lower) * n * l2_arr[q])
+        ret_arr.append( math.ceil((upper/lower) * n * l2_arr[q]))
 
     return ret_arr  #ret_arr => K
 
