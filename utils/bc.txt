@@ -11,7 +11,6 @@ from collections import OrderedDict
 from numpy import linalg as LA
 import copy
 
-#(new_w_locals, h) = BC.maxFinder(w_locals, bc_arr, K)
 def maxFinder(w_locals, bc_arr, K): #w_locals => M, bc_arr => M
     w = np.array(w_locals)
     a = np.array(bc_arr)
@@ -23,7 +22,6 @@ def maxFinder(w_locals, bc_arr, K): #w_locals => M, bc_arr => M
 
     return ret_w , ret_h  #ret_w => K, ret_h => K
 
-#C_arr = BC.cFinder(h, M, K)
 def cFinder(h, M, K):  #h => K
     ret_arr=[]
 
@@ -33,7 +31,6 @@ def cFinder(h, M, K):  #h => K
 
     return ret_arr  #ret_arr => K
 
-#N_arr = BC.nFinder(C_arr, K, n)
 def nFinder(C_arr, K, n):
     ret_arr = []
     lower = 0
@@ -54,10 +51,9 @@ def nFinder(C_arr, K, n):
 
         ret_arr.append(math.ceil((upper / lower) * n))
 
-
     return ret_arr
 
-#n_new_w_locals = BC.qFinder(C_arr, N_arr, new_w_locals, K,w_glob)
+
 def qFinder(C_arr, N_arr, new_w_locals, K,glob):
     ret_arr=[]
 
@@ -118,12 +114,12 @@ def qFinder(C_arr, N_arr, new_w_locals, K,glob):
 
         array_x_temp = ((np.round((array_x - min_ele) / a)) * a) + min_ele
 
-        array_x_temp[ind_that_set_to_zero] = 0
 
-        if target == 0:
-            array_x_temp = flat_glob
-        elif target > 0:
-            array_x_temp = np.add(flat_glob, array_x_temp)
+
+        #print(len(array_x_temp))
+        #print(len(flat_glob))
+
+        array_x_temp=np.add(array_x_temp,flat_glob)
 
 
 

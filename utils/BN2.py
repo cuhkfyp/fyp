@@ -5,7 +5,7 @@ from math import comb
 from collections import OrderedDict
 import copy
 import torch
-def maxFinder(w_locals, K,glob):  #w_locals => M
+def maxFinder(w_locals, K,glob,bc_arr):  #w_locals => M
     w = []
     l2_arr=[]
 
@@ -19,13 +19,23 @@ def maxFinder(w_locals, K,glob):  #w_locals => M
 
     idxs = l2_arr.argsort()[::-1][:K]
 
+    bc_arr=np.array(bc_arr)
+
+    ret_bc=bc_arr[idxs]
+
     ret_w = np.array(np.array(w_locals)[idxs])
     ret_l2 = np.array(l2_arr[idxs])
-    return (ret_w, ret_l2)  #ret_w => K, ret_l2 => K
+    return (ret_w, ret_l2,ret_bc)  #ret_w => K, ret_l2 => K
 
 def cFinder(bc_arr, K, M):  #bc_arr => K
+
     ret_arr = []
+
+
     h = LA.norm(np.array(bc_arr), axis=1)
+
+
+    check=0
     for i in range(K):
         c = math.log((1 + h[i] * h[i] * (M / K)), 2)
         ret_arr.append(c)
