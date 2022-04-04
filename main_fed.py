@@ -69,7 +69,8 @@ if __name__ == '__main__':
         len_in = 1
         for x in img_size:
             len_in *= x
-        net_glob = MLP(dim_in=len_in, dim_hidden=200, dim_out=args.num_classes).to(args.device)
+        net_glob = MLP(dim_in=len_in, dim_hidden=256, dim_out=args.num_classes).to(args.device)
+
     else:
         exit('Error: unrecognized model')
     print(net_glob)
@@ -87,12 +88,12 @@ if __name__ == '__main__':
     net_best = None
     best_loss = None
     val_acc_list, net_list = [], []
-    test_mode = "BN2_C"  # for test only / mode of scheduling scheme
-    Kc = 10
+    test_mode = "BC_BN2"  # for test only / mode of scheduling scheme
+    Kc =10
     K = int(args.frac * args.num_users)  # for test only / number of selected user
 
     M = args.num_users
-    n = 3000  # for test only / total transmission time in that iter
+    n = 5000  # for test only / total transmission time in that iter
 
     #print("this is the case that  total-local")
     #print("and without the zero line")
@@ -128,11 +129,11 @@ if __name__ == '__main__':
             loss_locals.append(copy.deepcopy(loss))
 
 ###################################################################################################################
-
+        bc_arr = np.random.randn(len(w_locals), 2) / np.sqrt(2)
 
         n_new_w_locals = []
         if(test_mode == "BC"):
-            bc_arr = np.random.randn(len(w_locals),2)/np.sqrt(2)
+            #bc_arr = np.random.randn(len(w_locals),2)/np.sqrt(2)
             (new_w_locals, h) = BC.maxFinder(w_locals, bc_arr, K)
             C_arr = BC.cFinder(h, M, K)
             N_arr = BC.nFinder(C_arr, K, n)
@@ -141,21 +142,21 @@ if __name__ == '__main__':
         if(test_mode == "BN2"): # BN2
             if iter>=64:
                 hi=0
-            (new_w_locals, l2_arr) = BN2.maxFinder(w_locals, K,w_glob)
-            bc_arr = np.random.randn(K, 2) / np.sqrt(2)
-            C_arr = BN2.cFinder(bc_arr, K, M)
+            (new_w_locals, l2_arr,bc_arr_2) = BN2.maxFinder(w_locals, K,w_glob,bc_arr)
+            #bc_arr = np.random.randn(K, 2) / np.sqrt(2)
+            C_arr = BN2.cFinder(bc_arr_2, K, M)
             N_arr = BN2.nFinder(l2_arr, C_arr, K, n)
             n_new_w_locals = BN2.qFinder(C_arr, N_arr, new_w_locals, K,w_glob)
 
         if(test_mode == "BC_BN2"): # BC-BN2
-            bc_arr = np.random.randn(M, 2) / np.sqrt(2)
+            #bc_arr = np.random.rand(M, 2) / np.sqrt(2)
             (new_w_locals, l2_arr, h) = BC_BN2.maxFinder(w_locals, bc_arr, Kc, K,w_glob)
             C_arr = BC_BN2.cFinder(h, K, M)
             N_arr = BC_BN2.nFinder(l2_arr, C_arr, K, n)
             n_new_w_locals = BC_BN2.qFinder(C_arr, N_arr, new_w_locals, K,w_glob)
 
         if (test_mode == "BN2_C"):  # BN2-C
-            bc_arr = np.random.randn(M, 2) / np.sqrt(2)
+            #bc_arr = np.random.randn(M, 2) / np.sqrt(2)
             C_arr = BN2_C.cFinder(bc_arr, K, M)
             w_1st = BN2_C.qFinder_1st(C_arr, w_locals, M, n, w_glob)
             (new_w_locals, l2_arr, new_C_arr) = BN2_C.maxFinder(w_1st, K, C_arr, w_locals)
@@ -204,6 +205,6 @@ if __name__ == '__main__':
     print("Training accuracy: {:.2f}".format(acc_train))
     print("Testing accuracy: {:.2f}".format(acc_test))
 
+    other_data = "./store/outbcarr256/___train_acc_test_acc_test_acc_array_test_loss_array_{}_{}_{}_ep{}_frac{}_iid{}_local_ep{}_local_bs{}_lr{}_kc_{}".format(args.dataset, test_mode, args.model, args.epochs, args.frac, args.iid, args.local_ep, args.local_bs, args.lr,Kc)
     #other_data = "./store/nsmall5000/___train_acc_test_acc_test_acc_array_test_loss_array_{}_{}_{}_ep{}_frac{}_iid{}_local_ep{}_local_bs{}_lr{}_kc_{}".format(args.dataset, test_mode, args.model, args.epochs, args.frac, args.iid, args.local_ep, args.local_bs, args.lr,Kc)
-    other_data = "./store/nsmall5000/___train_acc_test_acc_test_acc_array_test_loss_array_{}_{}_{}_ep{}_frac{}_iid{}_local_ep{}_local_bs{}_lr{}_kc_{}".format(args.dataset, test_mode, args.model, args.epochs, args.frac, args.iid, args.local_ep, args.local_bs, args.lr,Kc)
     np.savez(other_data, Training_accuracy=acc_train, Testing_acc=acc_test, train_loss=loss_train,testing_acc_array=acc_test_array, testing_loss_array=loss_test_array)
